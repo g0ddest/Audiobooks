@@ -5,18 +5,58 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class Main extends Activity {
 
-    private ListView booksList;
+    private ArrayList<HashMap<String, Object>> booksList;
+
+    private static final String TITLE = "title";
+    private static final String AUTHOR = "author";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setTitle("Аудиокниги Fantasy-Worlds");
 
-        booksList = (ListView) findViewById(R.id.booksView);
+        ListView booksView = (ListView) findViewById(R.id.booksView);
+
+        booksList = new ArrayList<HashMap<String, Object>>();
+        HashMap<String, Object> hm;
+
+        // Тестируем грид
+
+        hm = new HashMap<String, Object>();
+        hm.put(TITLE, "Книга 1"); // Название
+        hm.put(AUTHOR, "Автор 1"); // Автор
+        booksList.add(hm);
+
+        hm = new HashMap<String, Object>();
+        hm.put(TITLE, "Книга 2"); // Название
+        hm.put(AUTHOR, "Автор 2"); // Автор
+        booksList.add(hm);
+
+        hm = new HashMap<String, Object>();
+        hm.put(TITLE, "Книга 3"); // Название
+        hm.put(AUTHOR, "Автор 3"); // Автор
+        booksList.add(hm);
+
+        hm = new HashMap<String, Object>();
+        hm.put(TITLE, "Книга 4"); // Название
+        hm.put(AUTHOR, "Автор 4"); // Автор
+        booksList.add(hm);
+
+        SimpleAdapter adapter = new SimpleAdapter(this, booksList,
+                R.layout.booklist_item, new String[] { TITLE, AUTHOR },
+                new int[] { R.id.title, R.id.author });
+
+        booksView.setAdapter(adapter);
+
     }
 
 
@@ -33,9 +73,6 @@ public class Main extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 }
