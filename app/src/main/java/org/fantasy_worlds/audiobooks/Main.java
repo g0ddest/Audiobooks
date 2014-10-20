@@ -1,9 +1,13 @@
 package org.fantasy_worlds.audiobooks;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -56,6 +60,25 @@ public class Main extends Activity {
                 new int[] { R.id.title, R.id.author });
 
         booksView.setAdapter(adapter);
+
+        booksView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(Main.this);
+                HashMap item = (HashMap) adapterView.getItemAtPosition(i);
+                builder.setTitle("Сообщение")
+                        .setMessage("Выбрана книга "  + item.get(AUTHOR) + " : " + item.get(TITLE))
+                        .setCancelable(false)
+                        .setNegativeButton("ОК",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.cancel();
+                                    }
+                                });
+                AlertDialog alert = builder.create();
+                alert.show();
+            }
+        });
 
     }
 
