@@ -5,10 +5,14 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "authors")
 public class Author {
+
     @DatabaseField(dataType = DataType.LONG)
     public int Id;
+
     @DatabaseField(dataType = DataType.STRING)
     public String Name;
+
     @DatabaseField(dataType = DataType.STRING)
     public String Surname;
+
 }

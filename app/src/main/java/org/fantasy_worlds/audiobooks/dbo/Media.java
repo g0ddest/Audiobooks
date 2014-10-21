@@ -6,6 +6,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "media")
 public class Media {
+
     @DatabaseField(dataType = DataType.LONG)
     public int Id;
 
@@ -26,4 +27,5 @@ public class Media {
 
     @DatabaseField(dataType = DataType.STRING)
     public String Cover;
+
 }

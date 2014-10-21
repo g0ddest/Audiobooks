@@ -6,6 +6,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "media_part")
 public class MediaPart {
+
     @DatabaseField(dataType = DataType.LONG)
     public int Id;
 
@@ -20,4 +21,5 @@ public class MediaPart {
 
     @DatabaseField(dataType = DataType.STRING)
     public String Path;
+
 }
