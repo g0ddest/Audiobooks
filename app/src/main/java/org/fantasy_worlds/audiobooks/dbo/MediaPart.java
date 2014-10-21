@@ -4,6 +4,6 @@ public class MediaPart {
     public int Id;
     public int MediaId;
     public int Sequence;
-    public String title;
-    public String path;
+    public String Title;
+    public String Path;
 }
