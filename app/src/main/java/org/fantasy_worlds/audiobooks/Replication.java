@@ -15,8 +15,42 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Vector;
 
 public class Replication {
+    private class Mirror {
+        boolean m_is_alive = false;
+        String m_host;
+        public Mirror(String host) { m_host = "http://" + host; }
+        public boolean  isAlive() { return m_is_alive; }
+        public void     setAlive(boolean flag) { m_is_alive = flag; }
+        public String   getHost() { return m_host; }
+    }
+    protected Vector<Mirror> m_mirrors = new Vector<Mirror>();
+    private class MirrorsChecker extends AsyncTask<Vector<Mirror>, Void, Void> {
+        @Override
+        protected Void doInBackground(Vector<Mirror>... mirrors) {
+            HttpClient httpClient = new DefaultHttpClient();
+            for(Mirror mirror: mirrors[0]) {
+                try {
+                    HttpResponse httpResponse = httpClient.execute(new HttpGet(mirror.getHost() + "/"));
+                    httpResponse.getEntity().consumeContent();
+                    mirror.setAlive(true);
+                    Log.d("MirrorsChecker", mirror.getHost() + " is alive");
+                } catch (Exception e) {
+                    mirror.setAlive(false);
+                    Log.d("MirrorsChecker", mirror.getHost() + " is dead");
+                }
+            }
+            return null;
+        }
+    }
+
+    public Replication() {
+        m_mirrors.add( new Mirror("api.fantasy-worlds.org") );
+        m_mirrors.add( new Mirror("api.f-w.in") );
+        new MirrorsChecker().execute(m_mirrors);
+    }
 
     public void Init() {
         new HttpAsyncTask().execute("http://api.fantasy-worlds.org/media");
