@@ -6,13 +6,13 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "authors")
 public class Author {
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int Id;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Name;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Surname;
 
 }

@@ -7,25 +7,25 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "media")
 public class Media {
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int Id;
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int BookId;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String MediaTitle;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String BookTitle;
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int AuthorId;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Description;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Cover;
 
 }

@@ -7,19 +7,19 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "media_part")
 public class MediaPart {
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int Id;
 
-    @DatabaseField(dataType = DataType.LONG)
+    @DatabaseField()
     public int MediaId;
 
-    @DatabaseField(dataType = DataType.SHORT)
+    @DatabaseField()
     public int Sequence;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Title;
 
-    @DatabaseField(dataType = DataType.STRING)
+    @DatabaseField()
     public String Path;
 
 }
