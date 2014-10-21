@@ -61,19 +61,27 @@ public class Replication {
         return result;
     }
 
-    private class HttpAsyncTask extends AsyncTask<String, Void, String> {
+    private class HttpAsyncTask extends AsyncTask<String, Void, Vector<String>> {
         @Override
-        protected String doInBackground(String... urls) {
-            return GET(urls[0]);
+        protected Vector<String> doInBackground(String... urls) {
+            Vector<String> bodies = new Vector<String>(urls.length);
+            for(String url: urls)
+                bodies.add( GET(url) );
+            return bodies;
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
-        protected void onPostExecute(String result) {
-            try {
-                JSONObject obj = new JSONObject(result);
-                JSONArray array = obj.getJSONArray("items");
-            }catch (JSONException e){
+        protected void onPostExecute(Vector<String> result) {
+            for(String body: result)
+            {
+                try {
+                    JSONObject obj = new JSONObject(body);
+                    JSONArray items = obj.getJSONArray("items");
+                    JSONArray schema = obj.getJSONArray("schema");
+                    Log.d("HttpAsyncTask", schema.toString());
+                }catch (JSONException e){
 
+                }
             }
         }
     }
