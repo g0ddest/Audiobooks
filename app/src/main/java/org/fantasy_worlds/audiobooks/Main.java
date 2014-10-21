@@ -11,6 +11,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -27,6 +29,9 @@ public class Main extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setTitle("Аудиокниги Fantasy-Worlds");
+
+        Replication replication = new Replication();
+        replication.Init();
 
         ListView booksView = (ListView) findViewById(R.id.booksView);
 
