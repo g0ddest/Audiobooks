@@ -7,6 +7,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.fantasy_worlds.audiobooks.dbo.Author;
+import org.fantasy_worlds.audiobooks.dbo.Media;
+import org.fantasy_worlds.audiobooks.dbo.MediaPart;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,9 +18,21 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 public class Replication {
+
+    private class Source{
+        String url;
+        String data;
+        Class dbo;
+    }
+
     private class Mirror {
         boolean m_is_alive = false;
         String m_host;
@@ -49,11 +64,33 @@ public class Replication {
     public Replication() {
         m_mirrors.add( new Mirror("api.fantasy-worlds.org") );
         m_mirrors.add( new Mirror("api.f-w.in") );
+        m_mirrors.add( new Mirror("api.fantasy-worlds.net") );
         new MirrorsChecker().execute(m_mirrors);
     }
 
     public void Init() {
-        new HttpAsyncTask().execute("http://api.fantasy-worlds.org/media");
+
+        new HttpAsyncTask().execute(
+                new Source() {
+                    {
+                        url = "http://api.fantasy-worlds.org/authors";
+                        dbo = Author.class;
+                    }
+                },
+                new Source() {
+                    {
+                        url = "http://api.fantasy-worlds.org/media";
+                        dbo = Media.class;
+                    }
+                },
+                new Source() {
+                    {
+                        url = "http://api.fantasy-worlds.org/media_part";
+                        dbo = MediaPart.class;
+                    }
+                }
+        );
+
     }
 
     private static String convertInputStreamToString(InputStream inputStream) throws IOException {
@@ -95,23 +132,112 @@ public class Replication {
         return result;
     }
 
-    private class HttpAsyncTask extends AsyncTask<String, Void, Vector<String>> {
+    private class HttpAsyncTask extends AsyncTask<Source, Void, Vector<Source>> {
+
         @Override
-        protected Vector<String> doInBackground(String... urls) {
-            Vector<String> bodies = new Vector<String>(urls.length);
-            for(String url: urls)
-                bodies.add( GET(url) );
+        protected Vector<Source> doInBackground(Source... urls) {
+            Vector<Source> bodies = new Vector<Source>(urls.length);
+            for(Source source: urls) {
+                source.data = GET(source.url);
+                bodies.add(source);
+            }
             return bodies;
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
-        protected void onPostExecute(Vector<String> result) {
-            for(String body: result)
+        protected void onPostExecute(Vector<Source> result) {
+
+            // Костыльчик пока не появится тип данных
+            List<String> intKeys =
+                    Arrays.asList("id", "book_id", "author_id", "media_id", "sequence");
+
+            for(Source source: result)
             {
                 try {
-                    JSONObject obj = new JSONObject(body);
+                    JSONObject obj = new JSONObject(source.data);
                     JSONArray items = obj.getJSONArray("items");
-                    JSONArray schema = obj.getJSONArray("schema");
+                    final JSONArray schema = obj.getJSONArray("schema");
+
+                    ArrayList<HashMap<String, Object>> list =
+                            new ArrayList<HashMap<String, Object>>();
+
+                    for (int i = 0 ; i < items.length(); i++) {
+
+                        JSONArray item = items.getJSONArray(i);
+                        HashMap<String, Object> itemMap = new HashMap<String, Object>();
+
+                        for (int j = 0 ; j < schema.length(); j++){
+                            // Переделать с использованием Reflection
+                            String key = schema.getString(j);
+
+                            if(intKeys.contains(key)){
+                                itemMap.put(key, item.getInt(j));
+                            }else {
+                                itemMap.put(key, item.getString(j));
+                            }
+                        }
+
+                        list.add(itemMap);
+
+                    }
+
+                    // if ужасен, но остальное слишком дооолго
+                    if(source.dbo == Author.class){
+                        for(final HashMap<String, Object> author : list)
+                            try {
+                                // Тут и далее дропаются дубликаты, так как id уникальное поле
+                                HelperFactory.getHelper().getAuthorDao().create(
+                                        new Author() {
+                                            {
+                                                Id = (Integer) author.get("id");
+                                                Name = author.get("name").toString();
+                                                Surname = author.get("surname").toString();
+                                            }
+                                        }
+                                );
+                            }catch (Exception e){
+                                Log.d("Error", e.toString());
+                            }
+                    }
+                    if(source.dbo == Media.class){
+                        for(final HashMap<String, Object> media : list)
+                            try {
+                                HelperFactory.getHelper().getMediaDAO().create(
+                                        new Media() {
+                                            {
+                                                Id = (Integer) media.get("id");
+                                                BookId = (Integer) media.get("book_id");
+                                                MediaTitle = media.get("media_title").toString();
+                                                BookTitle = media.get("book_title").toString();
+                                                AuthorId = (Integer) media.get("author_id");
+                                                Description = media.get("description").toString();
+                                                Cover = media.get("cover").toString();
+                                            }
+                                        }
+                                );
+                            }catch (SQLException e){
+
+                            }
+                    }
+                    if(source.dbo == MediaPart.class){
+                        for(final HashMap<String, Object> media : list)
+                            try {
+                                HelperFactory.getHelper().getMediaPartDAO().create(
+                                        new MediaPart() {
+                                            {
+                                                Id = (Integer) media.get("id");
+                                                MediaId = (Integer) media.get("media_id");
+                                                Sequence = (Integer) media.get("sequence");
+                                                Title = media.get("title").toString();
+                                                Path = media.get("path").toString();
+                                            }
+                                        }
+                                );
+                            }catch (SQLException e){
+
+                            }
+                    }
+
                     Log.d("HttpAsyncTask", schema.toString());
                 }catch (JSONException e){
 

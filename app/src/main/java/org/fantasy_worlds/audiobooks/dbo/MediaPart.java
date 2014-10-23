@@ -12,14 +12,14 @@ import java.util.List;
 @DatabaseTable(tableName = "media_part")
 public class MediaPart {
 
-    @DatabaseField()
-    public int Id;
+    @DatabaseField(unique = true)
+    public Integer Id;
 
     @DatabaseField()
-    public int MediaId;
+    public Integer MediaId;
 
     @DatabaseField()
-    public int Sequence;
+    public Integer Sequence;
 
     @DatabaseField()
     public String Title;

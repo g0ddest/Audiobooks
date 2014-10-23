@@ -27,6 +27,7 @@ public class Main extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        HelperFactory.setHelper(getApplicationContext());
         setContentView(R.layout.activity_main);
         setTitle("Аудиокниги Fantasy-Worlds");
 
@@ -102,5 +103,11 @@ public class Main extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDestroy() {
+        HelperFactory.releaseHelper();
+        super.onDestroy();
     }
 }

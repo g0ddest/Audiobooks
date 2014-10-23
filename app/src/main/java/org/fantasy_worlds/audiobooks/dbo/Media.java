@@ -12,11 +12,11 @@ import java.util.List;
 @DatabaseTable(tableName = "media")
 public class Media {
 
-    @DatabaseField()
-    public int Id;
+    @DatabaseField(unique = true)
+    public Integer Id;
 
     @DatabaseField()
-    public int BookId;
+    public Integer BookId;
 
     @DatabaseField()
     public String MediaTitle;
@@ -25,7 +25,7 @@ public class Media {
     public String BookTitle;
 
     @DatabaseField()
-    public int AuthorId;
+    public Integer AuthorId;
 
     @DatabaseField()
     public String Description;
