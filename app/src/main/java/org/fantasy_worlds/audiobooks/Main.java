@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
@@ -131,7 +132,12 @@ public class Main extends Activity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(Main.this);
                 Media item = (Media) adapterView.getItemAtPosition(i);
-                builder.setTitle("Сообщение")
+
+                Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
+                //intent.putExtra(EXTRA_MESSAGE, message);
+                startActivity(intent);
+
+                /*builder.setTitle("Сообщение")
                         .setMessage("Выбрана аудиокнига ID:"  + item.Id + " TITLE: " + item.MediaTitle + "(" + item.BookTitle + ")")
                         .setCancelable(false)
                         .setNegativeButton("ОК",
@@ -141,7 +147,7 @@ public class Main extends Activity {
                                     }
                                 });
                 AlertDialog alert = builder.create();
-                alert.show();
+                alert.show();*/
             }
         });
 
