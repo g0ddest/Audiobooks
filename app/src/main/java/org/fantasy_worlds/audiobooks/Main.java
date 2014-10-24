@@ -18,7 +18,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.androidquery.AQuery;
@@ -27,9 +26,7 @@ import com.androidquery.callback.BitmapAjaxCallback;
 
 import org.fantasy_worlds.audiobooks.dbo.Author;
 import org.fantasy_worlds.audiobooks.dbo.Media;
-import org.json.JSONException;
 
-import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +35,6 @@ import java.util.List;
 
 public class Main extends Activity {
 
-    private ArrayList<HashMap<String, Object>> booksList;
     private float coverHeight = (float) 144.0;
     private AQuery aq = new AQuery(this);
 
@@ -95,8 +91,6 @@ public class Main extends Activity {
                         Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
 
                         iv.setImageBitmap(resizedBitmap);
-
-
                     }
 
                 });
@@ -117,7 +111,7 @@ public class Main extends Activity {
 
         ListView booksView = (ListView) findViewById(R.id.booksView);
 
-        booksList = new ArrayList<HashMap<String, Object>>();
+        ArrayList<HashMap<String, Object>> booksList = new ArrayList<HashMap<String, Object>>();
         HashMap<String, Object> hm;
 
         List<Media> medias = new ArrayList<Media>();
