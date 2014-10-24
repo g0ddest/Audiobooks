@@ -11,10 +11,14 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import org.fantasy_worlds.audiobooks.dbo.Author;
+import org.fantasy_worlds.audiobooks.dbo.Media;
 import org.json.JSONException;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class Main extends Activity {
@@ -39,27 +43,25 @@ public class Main extends Activity {
         booksList = new ArrayList<HashMap<String, Object>>();
         HashMap<String, Object> hm;
 
-        // Тестируем грид
+        List<Media> medias = new ArrayList<Media>();
 
-        hm = new HashMap<String, Object>();
-        hm.put(TITLE, "Книга 1"); // Название
-        hm.put(AUTHOR, "Автор 1"); // Автор
-        booksList.add(hm);
+        try {
+            medias = HelperFactory.getHelper().getMediaDAO().getAllMedia();
+        }catch (SQLException e){
 
-        hm = new HashMap<String, Object>();
-        hm.put(TITLE, "Книга 2"); // Название
-        hm.put(AUTHOR, "Автор 2"); // Автор
-        booksList.add(hm);
+        }
 
-        hm = new HashMap<String, Object>();
-        hm.put(TITLE, "Книга 3"); // Название
-        hm.put(AUTHOR, "Автор 3"); // Автор
-        booksList.add(hm);
-
-        hm = new HashMap<String, Object>();
-        hm.put(TITLE, "Книга 4"); // Название
-        hm.put(AUTHOR, "Автор 4"); // Автор
-        booksList.add(hm);
+        for(Media media : medias){
+            hm = new HashMap<String, Object>();
+            hm.put(TITLE, media.MediaTitle); // Название
+            try {
+                Author author = HelperFactory.getHelper().getAuthorDao().getAuthorById(media.AuthorId);
+                hm.put(AUTHOR, author.Name + " " + author.Surname); // Автор
+            }catch (SQLException e){
+                hm.put(AUTHOR, "");
+            }
+            booksList.add(hm);
+        }
 
         SimpleAdapter adapter = new SimpleAdapter(this, booksList,
                 R.layout.booklist_item, new String[] { TITLE, AUTHOR },
