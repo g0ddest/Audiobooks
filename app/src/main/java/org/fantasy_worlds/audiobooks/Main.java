@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.PorterDuff;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,14 +16,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+
+import com.androidquery.AQuery;
+import com.androidquery.callback.AjaxStatus;
+import com.androidquery.callback.BitmapAjaxCallback;
 
 import org.fantasy_worlds.audiobooks.dbo.Author;
 import org.fantasy_worlds.audiobooks.dbo.Media;
 import org.json.JSONException;
 
+import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,9 +39,8 @@ import java.util.List;
 public class Main extends Activity {
 
     private ArrayList<HashMap<String, Object>> booksList;
-
-    private static final String TITLE = "title";
-    private static final String AUTHOR = "author";
+    private float coverHeight = (float) 144.0;
+    private AQuery aq = new AQuery(this);
 
     private class MediaAdapter extends ArrayAdapter<Media> {
 
@@ -66,6 +75,31 @@ public class Main extends Activity {
                         author.setText("");
                     }
                 }
+                boolean memCache = false;
+                boolean fileCache = true;
+                // TODO: change to Mirrors
+                aq.id(R.id.img).image("http://fantasy-worlds.org" + media.Cover, memCache, fileCache, 0, 0, new BitmapAjaxCallback(){
+
+                    @Override
+                    public void callback(String url, ImageView iv, Bitmap bm, AjaxStatus status){
+
+                        int width = bm.getWidth();
+                        int height = bm.getHeight();
+                        float scale = coverHeight / height;
+                        // CREATE A MATRIX FOR THE MANIPULATION
+                        Matrix matrix = new Matrix();
+                        // RESIZE THE BIT MAP
+                        matrix.postScale(scale, scale);
+
+                        // "RECREATE" THE NEW BITMAP
+                        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+
+                        iv.setImageBitmap(resizedBitmap);
+
+
+                    }
+
+                });
             }
             return v;
         }

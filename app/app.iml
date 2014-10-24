@@ -82,6 +82,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="ormlite-android-4.48" level="project" />
     <orderEntry type="library" exported="" name="ormlite-core-4.48" level="project" />
+    <orderEntry type="library" exported="" name="android-query-full.0.26.7" level="project" />
   </component>
 </module>
 
