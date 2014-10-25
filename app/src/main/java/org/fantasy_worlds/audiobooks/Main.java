@@ -37,7 +37,6 @@ import java.util.List;
 public class Main extends Activity {
 
     private float coverHeight = (float) 144.0;
-    private AQuery aq = new AQuery(this);
 
     private class MediaAdapter extends ArrayAdapter<Media> {
 
@@ -56,6 +55,7 @@ public class Main extends Activity {
                 LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 v = vi.inflate(R.layout.booklist_item, null);
             }
+            AQuery aq = new AQuery(v);
             Media media = items.get(position);
             if (media != null) {
                 //set text to view
@@ -75,7 +75,7 @@ public class Main extends Activity {
                 boolean memCache = false;
                 boolean fileCache = true;
                 // TODO: change to Mirrors
-                aq.id(R.id.img).image("http://fantasy-worlds.org" + media.Cover, memCache, fileCache, 0, 0, new BitmapAjaxCallback(){
+                aq.id(R.id.cover).image("http://fantasy-worlds.org" + media.Cover, memCache, fileCache, 0, 0, new BitmapAjaxCallback(){
 
                     @Override
                     public void callback(String url, ImageView iv, Bitmap bm, AjaxStatus status){
