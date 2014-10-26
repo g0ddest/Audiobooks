@@ -35,6 +35,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 public class PlayerActivity extends Activity {
@@ -43,14 +44,28 @@ public class PlayerActivity extends Activity {
     private HashMap<Integer, File> cachedMedias = new HashMap<Integer, File>();
     private ImageButton buttonPlay;
     private Integer nowPlaying;
+    private Integer playingDuration;
     private SeekBar seekBar;
+    private TextView durationLabel;
     private Handler mHandler = new Handler();
     private StoppableRunnable updatePosition = new StoppableRunnable() {
         @Override
         public void stoppableRun() {
-            if(mediaPlayer != null){
+            if(mediaPlayer != null && playingDuration != null){
                 int mCurrentPosition = mediaPlayer.getCurrentPosition();
                 seekBar.setProgress(mCurrentPosition);
+                String total = String.format("%02d:%02d",
+                        TimeUnit.MILLISECONDS.toMinutes(playingDuration),
+                        TimeUnit.MILLISECONDS.toSeconds(playingDuration) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(playingDuration))
+                );
+
+                String now = String.format("%02d:%02d",
+                        TimeUnit.MILLISECONDS.toMinutes(mCurrentPosition),
+                        TimeUnit.MILLISECONDS.toSeconds(mCurrentPosition) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(mCurrentPosition))
+                );
+                durationLabel.setText(String.format("%s из %s", now, total));
             }
             mHandler.postDelayed(this, 1000);
         }
@@ -132,6 +147,7 @@ public class PlayerActivity extends Activity {
         MediaPartAdapter adapter = new MediaPartAdapter(this, R.layout.medialist_item, mediaParts);
         ListView partsView = (ListView) findViewById(R.id.partsList);
         seekBar = (SeekBar) findViewById(R.id.progressBar);
+        durationLabel = (TextView) findViewById(R.id.totalDurationLabel);
         partsView.setAdapter(adapter);
         partsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -147,6 +163,8 @@ public class PlayerActivity extends Activity {
                     mediaPlayer.prepare();
                     mediaPlayer.start();
                     seekBar.setMax(mediaPlayer.getDuration());
+                    playingDuration = mediaPlayer.getDuration();
+
                     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
                         @Override
