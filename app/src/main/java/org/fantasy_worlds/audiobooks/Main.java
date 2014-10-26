@@ -130,11 +130,11 @@ public class Main extends Activity {
         booksView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(Main.this);
+                //AlertDialog.Builder builder = new AlertDialog.Builder(Main.this);
                 Media item = (Media) adapterView.getItemAtPosition(i);
 
                 Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
-                //intent.putExtra(EXTRA_MESSAGE, message);
+                intent.putExtra("mediaId", item.Id);
                 startActivity(intent);
 
                 /*builder.setTitle("Сообщение")
