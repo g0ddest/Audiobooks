@@ -12,7 +12,7 @@ import java.util.List;
 @DatabaseTable(tableName = "media")
 public class Media {
 
-    @DatabaseField(unique = true)
+    @DatabaseField(id = true)
     public Integer Id;
 
     @DatabaseField()

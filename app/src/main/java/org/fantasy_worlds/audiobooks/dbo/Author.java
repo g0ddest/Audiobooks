@@ -11,7 +11,7 @@ import java.util.List;
 @DatabaseTable(tableName = "authors")
 public class Author {
 
-    @DatabaseField(unique = true)
+    @DatabaseField(id = true)
     public Integer Id;
 
     @DatabaseField()

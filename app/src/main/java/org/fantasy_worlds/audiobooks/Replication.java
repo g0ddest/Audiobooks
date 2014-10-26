@@ -185,8 +185,7 @@ public class Replication {
                     if(source.dbo == Author.class){
                         for(final HashMap<String, Object> author : list)
                             try {
-                                // Тут и далее дропаются дубликаты, так как id уникальное поле
-                                HelperFactory.getHelper().getAuthorDao().create(
+                                HelperFactory.getHelper().getAuthorDao().createOrUpdate(
                                         new Author() {
                                             {
                                                 Id = (Integer) author.get("id");
@@ -202,7 +201,7 @@ public class Replication {
                     if(source.dbo == Media.class){
                         for(final HashMap<String, Object> media : list)
                             try {
-                                HelperFactory.getHelper().getMediaDAO().create(
+                                HelperFactory.getHelper().getMediaDAO().createOrUpdate(
                                         new Media() {
                                             {
                                                 Id = (Integer) media.get("id");
@@ -222,7 +221,7 @@ public class Replication {
                     if(source.dbo == MediaPart.class){
                         for(final HashMap<String, Object> media : list)
                             try {
-                                HelperFactory.getHelper().getMediaPartDAO().create(
+                                HelperFactory.getHelper().getMediaPartDAO().createOrUpdate(
                                         new MediaPart() {
                                             {
                                                 Id = (Integer) media.get("id");
