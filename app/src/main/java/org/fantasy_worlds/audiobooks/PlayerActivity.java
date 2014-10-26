@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -67,37 +68,17 @@ public class PlayerActivity extends Activity {
             }
 
             assert mediaPart != null;
-            aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, new AjaxCallback<File>(){
-
+            long expire = 0;
+            aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, expire, new AjaxCallback<File>(){
                 public void callback(String url, File file, AjaxStatus status) {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(PlayerActivity.this);
-
                     loadStatus.setImageDrawable(getResources().getDrawable(R.drawable.ic_ok));
                     mediaLoadBar.setVisibility(View.GONE);
-
-                    String message;
-
-                    if(file != null){
-                        message = "File:" + file.length() + ":" +  status;
-                    }else{
-                        message = "Failed" + status;
+                    if(file != null) {
+                        Log.d("PlayerActivity", "OK");
+                    } else {
+                        Log.e("PlayerActivity", "Failed" + status);
                     }
-
-                    builder.setTitle("Сообщение")
-                            .setMessage(message)
-                            .setCancelable(false)
-                            .setNegativeButton("ОК",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.cancel();
-                                        }
-                                    });
-                    AlertDialog alert = builder.create();
-                    alert.show();
-
                 }
-
             });
 
             return v;
