@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -26,12 +29,17 @@ import org.fantasy_worlds.audiobooks.dbo.Media;
 import org.fantasy_worlds.audiobooks.dbo.MediaPart;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class PlayerActivity extends Activity {
+
+    private MediaPlayer mediaPlayer = new MediaPlayer();
+    private HashMap<Integer, File> cachedMedias = new HashMap<Integer, File>();
 
     private class MediaPartAdapter extends ArrayAdapter<MediaPart> {
 
@@ -58,7 +66,7 @@ public class PlayerActivity extends Activity {
 
             AQuery aq = new AQuery(v);
 
-            MediaPart mediaPart = items.get(position);
+            final MediaPart mediaPart = items.get(position);
             if (mediaPart != null) {
                 //set text to view
                 TextView title = (TextView) v.findViewById(R.id.media_title);
@@ -71,6 +79,7 @@ public class PlayerActivity extends Activity {
             long expire = 0;
             aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, expire, new AjaxCallback<File>(){
                 public void callback(String url, File file, AjaxStatus status) {
+                    cachedMedias.put(mediaPart.Id, file);
                     loadStatus.setImageDrawable(getResources().getDrawable(R.drawable.ic_ok));
                     mediaLoadBar.setVisibility(View.GONE);
                     if(file != null) {
@@ -105,6 +114,23 @@ public class PlayerActivity extends Activity {
         MediaPartAdapter adapter = new MediaPartAdapter(this, R.layout.medialist_item, mediaParts);
         ListView partsView = (ListView) findViewById(R.id.partsList);
         partsView.setAdapter(adapter);
+        partsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                mediaPlayer.stop();
+                mediaPlayer = new MediaPlayer();
+                MediaPart item = (MediaPart) adapterView.getItemAtPosition(i);
+                File audio = cachedMedias.get(item.Id);
+                try {
+                    mediaPlayer.setDataSource(audio.getPath());
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    mediaPlayer.prepare();
+                    mediaPlayer.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
