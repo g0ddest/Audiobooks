@@ -22,10 +22,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyActivity"
-            android:label="@string/title_activity_my" >
-        </activity>
-        <activity
             android:name=".PlayerActivity"
             android:label="@string/title_activity_player" >
         </activity>
