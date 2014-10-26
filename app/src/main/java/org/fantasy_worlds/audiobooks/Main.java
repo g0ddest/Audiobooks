@@ -36,8 +36,6 @@ import java.util.List;
 
 public class Main extends Activity {
 
-    private float coverHeight = (float) 144.0;
-
     private class MediaAdapter extends ArrayAdapter<Media> {
 
         private List<Media> items;
@@ -78,12 +76,6 @@ public class Main extends Activity {
                 aq.id(R.id.cover).image("http://fantasy-worlds.org" + media.Cover, memCache, fileCache, 0, 0, new BitmapAjaxCallback(){
                     @Override
                     public void callback(String url, ImageView iv, Bitmap bm, AjaxStatus status){
-                        /*int width = bm.getWidth();
-                        int height = bm.getHeight();
-                        float scale = coverHeight / height;
-                        Matrix matrix = new Matrix();
-                        matrix.postScale(scale, scale);
-                        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);*/
                         iv.setImageBitmap(bm);
                     }
                 });

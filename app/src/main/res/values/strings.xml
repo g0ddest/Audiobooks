@@ -6,5 +6,6 @@
     <string name="title_activity_my">MyActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_player">PlayerActivity</string>
+    <string name="playButtonTxt">Play/Pause</string>
 
 </resources>

@@ -1,13 +1,12 @@
 package org.fantasy_worlds.audiobooks;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,9 +15,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.androidquery.AQuery;
@@ -40,6 +41,20 @@ public class PlayerActivity extends Activity {
 
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private HashMap<Integer, File> cachedMedias = new HashMap<Integer, File>();
+    private ImageButton buttonPlay;
+    private Integer nowPlaying;
+    private SeekBar seekBar;
+    private Handler mHandler = new Handler();
+    private StoppableRunnable updatePosition = new StoppableRunnable() {
+        @Override
+        public void stoppableRun() {
+            if(mediaPlayer != null){
+                int mCurrentPosition = mediaPlayer.getCurrentPosition();
+                seekBar.setProgress(mCurrentPosition);
+            }
+            mHandler.postDelayed(this, 1000);
+        }
+    };
 
     private class MediaPartAdapter extends ArrayAdapter<MediaPart> {
 
@@ -111,8 +126,12 @@ public class PlayerActivity extends Activity {
         setContentView(R.layout.activity_player);
 
         setTitle(media.MediaTitle);
+
+        buttonPlay = (ImageButton) findViewById(R.id.btnPlay);
+
         MediaPartAdapter adapter = new MediaPartAdapter(this, R.layout.medialist_item, mediaParts);
         ListView partsView = (ListView) findViewById(R.id.partsList);
+        seekBar = (SeekBar) findViewById(R.id.progressBar);
         partsView.setAdapter(adapter);
         partsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -120,15 +139,47 @@ public class PlayerActivity extends Activity {
                 mediaPlayer.stop();
                 mediaPlayer = new MediaPlayer();
                 MediaPart item = (MediaPart) adapterView.getItemAtPosition(i);
+                nowPlaying = item.Id;
                 File audio = cachedMedias.get(item.Id);
                 try {
                     mediaPlayer.setDataSource(audio.getPath());
                     mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                     mediaPlayer.prepare();
                     mediaPlayer.start();
+                    seekBar.setMax(mediaPlayer.getDuration());
+                    seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) {
+
+                        }
+
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) {
+
+                        }
+
+                        @Override
+                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                            if(mediaPlayer != null && fromUser){
+                                mediaPlayer.seekTo(progress);
+                            }
+                        }
+                    });
+                    updatePosition.run();
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+                    {
+                        @Override
+                        public void onCompletion(MediaPlayer mp)
+                        {
+                            nowPlaying = null;
+                            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+                        }
+                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
             }
         });
     }
@@ -148,4 +199,22 @@ public class PlayerActivity extends Activity {
         int id = item.getItemId();
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
+
+    public void onClickStart(View view) {
+        if(mediaPlayer.isPlaying()){
+            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+            mediaPlayer.pause();
+        }else{
+            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
+            mediaPlayer.start();
+        }
+    }
+
+    public void onDestroy() {
+        updatePosition.stop();
+        mediaPlayer.stop();
+        super.onDestroy();
+    }
+
 }
+

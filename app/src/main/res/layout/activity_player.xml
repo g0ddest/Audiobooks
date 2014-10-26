@@ -36,7 +36,10 @@
                 android:layout_width="wrap_content"
                 android:padding="10dp"
                 android:layout_height="wrap_content"
-                android:background="@null"/>
+                android:background="@null"
+                android:contentDescription="@string/playButtonTxt"
+                android:clickable="true"
+                android:onClick="onClickStart" />
             <!-- Next Button -->
             <ImageButton
                 android:id="@+id/btnNext"
@@ -101,6 +104,5 @@
         android:layout_alignRight="@+id/timerDisplay"
         android:layout_alignEnd="@+id/timerDisplay"
         android:layout_margin="10dp" />
-
 
 </RelativeLayout>
