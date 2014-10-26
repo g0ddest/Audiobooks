@@ -77,12 +77,11 @@ public class PlayerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        setTitle("Аудиокнига «" + media.MediaTitle + "»");
+        setTitle("media.MediaTitle");
         MediaPartAdapter adapter = new MediaPartAdapter(this, R.layout.medialist_item, mediaParts);
         ListView partsView = (ListView) findViewById(R.id.partsList);
         partsView.setAdapter(adapter);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
