@@ -73,7 +73,7 @@
         <TextView
             android:id="@+id/totalDurationLabel"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="right"
             android:textColor="#04cbde"
@@ -92,14 +92,15 @@
         android:layout_centerHorizontal="true" />
 
     <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:id="@+id/partsList"
         android:layout_alignLeft="@+id/timerDisplay"
         android:layout_alignStart="@+id/timerDisplay"
         android:layout_above="@+id/timerDisplay"
         android:layout_alignRight="@+id/timerDisplay"
-        android:layout_alignEnd="@+id/timerDisplay" />
+        android:layout_alignEnd="@+id/timerDisplay"
+        android:layout_margin="10dp" />
 
 
 </RelativeLayout>
