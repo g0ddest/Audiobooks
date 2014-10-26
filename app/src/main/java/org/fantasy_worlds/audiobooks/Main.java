@@ -76,24 +76,16 @@ public class Main extends Activity {
                 boolean fileCache = true;
                 // TODO: change to Mirrors
                 aq.id(R.id.cover).image("http://fantasy-worlds.org" + media.Cover, memCache, fileCache, 0, 0, new BitmapAjaxCallback(){
-
                     @Override
                     public void callback(String url, ImageView iv, Bitmap bm, AjaxStatus status){
-
-                        int width = bm.getWidth();
+                        /*int width = bm.getWidth();
                         int height = bm.getHeight();
                         float scale = coverHeight / height;
-                        // CREATE A MATRIX FOR THE MANIPULATION
                         Matrix matrix = new Matrix();
-                        // RESIZE THE BIT MAP
                         matrix.postScale(scale, scale);
-
-                        // "RECREATE" THE NEW BITMAP
-                        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
-
-                        iv.setImageBitmap(resizedBitmap);
+                        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);*/
+                        iv.setImageBitmap(bm);
                     }
-
                 });
             }
             return v;
