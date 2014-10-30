@@ -124,6 +124,18 @@ public class PlayerActivity extends Activity {
         }
     }
 
+    protected static void setMediaPlayerFile(MediaPlayer mediaPlayer, File file) {
+        try {
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(file.getPath());
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
@@ -152,51 +164,52 @@ public class PlayerActivity extends Activity {
         partsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                mediaPlayer.stop();
-                mediaPlayer = new MediaPlayer();
                 MediaPart item = (MediaPart) adapterView.getItemAtPosition(i);
                 nowPlaying = item.Id;
                 File audio = cachedMedias.get(item.Id);
-                try {
-                    mediaPlayer.setDataSource(audio.getPath());
-                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
-                    seekBar.setMax(mediaPlayer.getDuration());
-                    playingDuration = mediaPlayer.getDuration();
+                setMediaPlayerFile(mediaPlayer, audio);
+                seekBar.setMax(mediaPlayer.getDuration());
+                playingDuration = mediaPlayer.getDuration();
+                seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
 
-                    seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    }
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
 
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {
-
+                    }
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        if(mediaPlayer != null && fromUser){
+                            mediaPlayer.seekTo(progress);
                         }
-
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {
-
-                        }
-
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if(mediaPlayer != null && fromUser){
-                                mediaPlayer.seekTo(progress);
-                            }
-                        }
-                    });
-                    updatePosition.run();
-                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+                    }
+                });
+                updatePosition.run();
+                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+                {
+                    @Override
+                    public void onCompletion(MediaPlayer mp)
                     {
-                        @Override
-                        public void onCompletion(MediaPlayer mp)
-                        {
-                            nowPlaying = null;
-                            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+                        MediaPart nextPart = null;
+                        try {
+                            nextPart = HelperFactory.getHelper().getMediaPartDAO().getNextPart(nowPlaying);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                        if (nextPart != null) {
+                            nowPlaying = nextPart.Id;
+                            File audio = cachedMedias.get(nowPlaying);
+                            setMediaPlayerFile(mp, audio);
+                            seekBar.setMax(mp.getDuration());
+                            playingDuration = mp.getDuration();
+                        } else {
+                            nowPlaying = null;
+                        }
+                        buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+                    }
+                });
                 buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
             }
         });
