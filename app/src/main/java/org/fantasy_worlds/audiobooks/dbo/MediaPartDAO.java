@@ -6,7 +6,6 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MediaPartDAO extends BaseDaoImpl<MediaPart, Integer> {
@@ -27,4 +26,22 @@ public class MediaPartDAO extends BaseDaoImpl<MediaPart, Integer> {
         return query(preparedQuery);
     }
 
+    public MediaPart getNextPart(MediaPart mediaPart) throws SQLException {
+        QueryBuilder<MediaPart, Integer> queryBuilder = queryBuilder();
+        queryBuilder.where().eq("MediaId", mediaPart.MediaId)
+                .and().gt("Sequence", mediaPart.Sequence);
+        queryBuilder.limit(new Long(1));
+        queryBuilder.orderBy("Sequence", /*ascending*/ true);
+        List<MediaPart> parts = queryBuilder.query();
+        if (parts != null && parts.size() > 0) {
+            return parts.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public MediaPart getNextPart(Integer mediaPartID) throws SQLException {
+        MediaPart mediaPart = this.queryForId(mediaPartID);
+        return getNextPart(mediaPart);
+    }
 }
