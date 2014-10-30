@@ -1,5 +1,6 @@
 package org.fantasy_worlds.audiobooks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -14,34 +15,30 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Vector;
+
+import com.androidquery.AQuery;
+import com.androidquery.callback.AjaxCallback;
+import com.androidquery.callback.AjaxStatus;
 
 public class Replication {
 
     private class Source{
-        String url;
-        String data;
-        Class dbo;
+        String mUrl;
+        String mData;
+        Class mDbo;
     }
 
     private class Mirror {
-        boolean m_is_alive = false;
-        String m_host;
-        public Mirror(String host) { m_host = "http://" + host; }
-        public boolean  isAlive() { return m_is_alive; }
-        public void     setAlive(boolean flag) { m_is_alive = flag; }
-        public String   getHost() { return m_host; }
+        boolean mIsAlive = false;
+        String mHost;
+        public Mirror(String host) { mHost = "http://" + host; }
+        public boolean  isAlive() { return mIsAlive; }
+        public void     setAlive(boolean flag) { mIsAlive = flag; }
+        public String   getHost() { return mHost; }
     }
-    protected Vector<Mirror> m_mirrors = new Vector<Mirror>();
+    protected Vector<Mirror> mMirrors = new Vector<Mirror>();
     private class MirrorsChecker extends AsyncTask<Vector<Mirror>, Void, Void> {
         @Override
         protected Void doInBackground(Vector<Mirror>... mirrors) {
@@ -61,188 +58,126 @@ public class Replication {
         }
     }
 
-    public Replication() {
-        m_mirrors.add( new Mirror("api.fantasy-worlds.org") );
-        m_mirrors.add( new Mirror("api.f-w.in") );
-        m_mirrors.add( new Mirror("api.fantasy-worlds.net") );
-        new MirrorsChecker().execute(m_mirrors);
+    AQuery mAq;
+
+    public Replication(Context context) {
+        mMirrors.add(new Mirror("api.fantasy-worlds.org"));
+        mMirrors.add(new Mirror("api.f-w.in"));
+        mMirrors.add(new Mirror("api.fantasy-worlds.net"));
+        new MirrorsChecker().execute(mMirrors);
+        mAq = new AQuery(context);
     }
 
-    public void Init() {
-
-        new HttpAsyncTask().execute(
-                new Source() {
-                    {
-                        url = "http://api.fantasy-worlds.org/authors";
-                        dbo = Author.class;
-                    }
-                },
-                new Source() {
-                    {
-                        url = "http://api.fantasy-worlds.org/media";
-                        dbo = Media.class;
-                    }
-                },
-                new Source() {
-                    {
-                        url = "http://api.fantasy-worlds.org/media_part";
-                        dbo = MediaPart.class;
-                    }
-                }
-        );
-
-    }
-
-    private static String convertInputStreamToString(InputStream inputStream) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
-        String line = "";
-        String result = "";
-        while((line = bufferedReader.readLine()) != null)
-            result += line;
-
-        inputStream.close();
-        return result;
-
-    }
-
-    public static String GET(String url){
-        InputStream inputStream = null;
-        String result = "";
-        try {
-
-            // create HttpClient
-            HttpClient httpclient = new DefaultHttpClient();
-
-            // make GET request to the given URL
-            HttpResponse httpResponse = httpclient.execute(new HttpGet(url));
-
-            // receive response as inputStream
-            inputStream = httpResponse.getEntity().getContent();
-
-            // convert inputstream to string
-            if(inputStream != null)
-                result = convertInputStreamToString(inputStream);
-            else
-                result = "Did not work!";
-
-        } catch (Exception e) {
-            Log.d("InputStream", e.getLocalizedMessage());
-        }
-
-        return result;
-    }
-
-    private class HttpAsyncTask extends AsyncTask<Source, Void, Vector<Source>> {
-
-        @Override
-        protected Vector<Source> doInBackground(Source... urls) {
-            Vector<Source> bodies = new Vector<Source>(urls.length);
-            for(Source source: urls) {
-                source.data = GET(source.url);
-                bodies.add(source);
-            }
-            return bodies;
-        }
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(Vector<Source> result) {
-
-            // Костыльчик пока не появится тип данных
-            List<String> intKeys =
-                    Arrays.asList("id", "book_id", "author_id", "media_id", "sequence");
-
-            for(Source source: result)
-            {
+    public Runnable Init() {
+        return new Runnable() {
+            protected HashMap<String, Integer> getKey2Idx(JSONArray schema) {
                 try {
-                    JSONObject obj = new JSONObject(source.data);
-                    JSONArray items = obj.getJSONArray("items");
-                    final JSONArray schema = obj.getJSONArray("schema");
-
-                    ArrayList<HashMap<String, Object>> list =
-                            new ArrayList<HashMap<String, Object>>();
-
-                    for (int i = 0 ; i < items.length(); i++) {
-
-                        JSONArray item = items.getJSONArray(i);
-                        HashMap<String, Object> itemMap = new HashMap<String, Object>();
-
-                        for (int j = 0 ; j < schema.length(); j++){
-                            // Переделать с использованием Reflection
-                            String key = schema.getString(j);
-
-                            if(intKeys.contains(key)){
-                                itemMap.put(key, item.getInt(j));
-                            }else {
-                                itemMap.put(key, item.getString(j));
+                    HashMap<String, Integer> result = new HashMap<String, Integer>();
+                    for (int i = 0; i < schema.length(); i++) {
+                        result.put(schema.getString(i), i);
+                    }
+                    return result;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            public void run() {
+                mAq.ajax("http://api.fantasy-worlds.org/authors", JSONObject.class, new AjaxCallback<JSONObject>() {
+                    @Override
+                    public void callback(String url, JSONObject obj, AjaxStatus status) {
+                        if (obj == null) {
+                            Log.e("Replication", url + " " + status.getMessage());
+                        } else {
+                            try {
+                                JSONArray items = obj.getJSONArray("items");
+                                JSONArray schema = obj.getJSONArray("schema");
+                                Log.d("Replication", schema.toString());
+                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
+                                for (int i = 0; i < items.length(); i++) {
+                                    final JSONArray author = items.getJSONArray(i);
+                                    HelperFactory.getHelper().getAuthorDao().createOrUpdate(
+                                            new Author() {
+                                                {
+                                                    Id = author.getInt( key2idx.get("id") );
+                                                    Name = author.getString( key2idx.get("name") );
+                                                    Surname = author.getString( key2idx.get("surname") );
+                                                }
+                                            }
+                                    );
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         }
-
-                        list.add(itemMap);
-
                     }
-
-                    // if ужасен, но остальное слишком дооолго
-                    if(source.dbo == Author.class){
-                        for(final HashMap<String, Object> author : list)
+                });
+                mAq.ajax("http://api.fantasy-worlds.org/media", JSONObject.class, new AjaxCallback<JSONObject>() {
+                    @Override
+                    public void callback(String url, JSONObject obj, AjaxStatus status) {
+                        if (obj == null) {
+                            Log.e("Replication", url + " " + status.getMessage());
+                        } else {
                             try {
-                                HelperFactory.getHelper().getAuthorDao().createOrUpdate(
-                                        new Author() {
-                                            {
-                                                Id = (Integer) author.get("id");
-                                                Name = author.get("name").toString();
-                                                Surname = author.get("surname").toString();
+                                final JSONArray items = obj.getJSONArray("items");
+                                JSONArray schema = obj.getJSONArray("schema");
+                                Log.d("Replication", schema.toString());
+                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
+                                for (int i = 0; i < items.length(); i++) {
+                                    final JSONArray media = items.getJSONArray(i);
+                                    HelperFactory.getHelper().getMediaDAO().createOrUpdate(
+                                            new Media() {
+                                                {
+                                                    Id = media.getInt( key2idx.get("id") );
+                                                    BookId = media.getInt( key2idx.get("book_id") );
+                                                    MediaTitle = media.getString( key2idx.get("media_title") );
+                                                    BookTitle = media.getString( key2idx.get("book_title") );
+                                                    AuthorId = media.getInt( key2idx.get("author_id") );
+                                                    Description = media.getString( key2idx.get("description") );
+                                                    Cover = media.getString( key2idx.get("cover") );
+                                                }
                                             }
-                                        }
-                                );
-                            }catch (Exception e){
-                                Log.d("Error", e.toString());
+                                    );
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
+                        }
                     }
-                    if(source.dbo == Media.class){
-                        for(final HashMap<String, Object> media : list)
+                });
+                mAq.ajax("http://api.fantasy-worlds.org/media_part", JSONObject.class, new AjaxCallback<JSONObject>() {
+                    @Override
+                    public void callback(String url, JSONObject obj, AjaxStatus status) {
+                        if (obj == null) {
+                            Log.e("Replication", url + " " + status.getMessage());
+                        } else {
                             try {
-                                HelperFactory.getHelper().getMediaDAO().createOrUpdate(
-                                        new Media() {
-                                            {
-                                                Id = (Integer) media.get("id");
-                                                BookId = (Integer) media.get("book_id");
-                                                MediaTitle = media.get("media_title").toString();
-                                                BookTitle = media.get("book_title").toString();
-                                                AuthorId = (Integer) media.get("author_id");
-                                                Description = media.get("description").toString();
-                                                Cover = media.get("cover").toString();
+                                final JSONArray items = obj.getJSONArray("items");
+                                JSONArray schema = obj.getJSONArray("schema");
+                                Log.d("Replication", schema.toString());
+                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
+                                for (int i = 0; i < items.length(); i++) {
+                                    final JSONArray media_part = items.getJSONArray(i);
+                                    HelperFactory.getHelper().getMediaPartDAO().createOrUpdate(
+                                            new MediaPart() {
+                                                {
+                                                    Id = media_part.getInt( key2idx.get("id") );
+                                                    MediaId = media_part.getInt( key2idx.get("media_id") );
+                                                    Sequence = media_part.getInt( key2idx.get("sequence") );
+                                                    Title = media_part.getString( key2idx.get("title") );
+                                                    Path = media_part.getString( key2idx.get("path") );
+                                                }
                                             }
-                                        }
-                                );
-                            }catch (SQLException e){
-
+                                    );
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
+                        }
                     }
-                    if(source.dbo == MediaPart.class){
-                        for(final HashMap<String, Object> media : list)
-                            try {
-                                HelperFactory.getHelper().getMediaPartDAO().createOrUpdate(
-                                        new MediaPart() {
-                                            {
-                                                Id = (Integer) media.get("id");
-                                                MediaId = (Integer) media.get("media_id");
-                                                Sequence = (Integer) media.get("sequence");
-                                                Title = media.get("title").toString();
-                                                Path = media.get("path").toString();
-                                            }
-                                        }
-                                );
-                            }catch (SQLException e){
-
-                            }
-                    }
-
-                    Log.d("HttpAsyncTask", schema.toString());
-                }catch (JSONException e){
-
-                }
+                });
             }
-        }
+        };
     }
 
 }

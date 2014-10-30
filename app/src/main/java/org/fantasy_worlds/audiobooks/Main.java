@@ -91,8 +91,9 @@ public class Main extends Activity {
         setContentView(R.layout.activity_main);
         setTitle("Аудиокниги Fantasy-Worlds");
 
-        Replication replication = new Replication();
-        replication.Init();
+        Replication replication = new Replication(this);
+        Runnable r = replication.Init();
+        new Thread(r).start();
 
         ListView booksView = (ListView) findViewById(R.id.booksView);
 
