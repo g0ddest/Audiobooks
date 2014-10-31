@@ -68,111 +68,95 @@ public class Replication {
         mAq = new AQuery(context);
     }
 
-    public Runnable Init() {
-        return new Runnable() {
-            protected HashMap<String, Integer> getKey2Idx(JSONArray schema) {
+    protected abstract class ReplicationCallback extends AjaxCallback<JSONObject> {
+        protected HashMap<String, Integer> getKey2Idx(JSONArray schema) {
+            try {
+                HashMap<String, Integer> result = new HashMap<String, Integer>();
+                for (int i = 0; i < schema.length(); i++) {
+                    result.put(schema.getString(i), i);
+                }
+                return result;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        public abstract void replicate(JSONArray items, final HashMap<String, Integer> key2idx) throws Exception;
+        @Override
+        public void callback(String url, JSONObject obj, AjaxStatus status) {
+            if (obj == null) {
+                Log.e("ReplicationCallback", url + " " + status.getMessage());
+            } else {
                 try {
-                    HashMap<String, Integer> result = new HashMap<String, Integer>();
-                    for (int i = 0; i < schema.length(); i++) {
-                        result.put(schema.getString(i), i);
-                    }
-                    return result;
-                } catch (JSONException e) {
+                    JSONArray items = obj.getJSONArray("items");
+                    JSONArray schema = obj.getJSONArray("schema");
+                    Log.d("ReplicationCallback", schema.toString());
+                    HashMap<String, Integer> key2idx = getKey2Idx(schema);
+                    replicate(items, key2idx);
+                } catch (Exception e) {
                     e.printStackTrace();
-                    return null;
                 }
             }
+        }
+    }
+
+    public Runnable Init() {
+        return new Runnable() {
             public void run() {
-                mAq.ajax("http://api.fantasy-worlds.org/authors", JSONObject.class, new AjaxCallback<JSONObject>() {
+                mAq.ajax("http://api.fantasy-worlds.org/authors", JSONObject.class, new ReplicationCallback() {
                     @Override
-                    public void callback(String url, JSONObject obj, AjaxStatus status) {
-                        if (obj == null) {
-                            Log.e("Replication", url + " " + status.getMessage());
-                        } else {
-                            try {
-                                JSONArray items = obj.getJSONArray("items");
-                                JSONArray schema = obj.getJSONArray("schema");
-                                Log.d("Replication", schema.toString());
-                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
-                                for (int i = 0; i < items.length(); i++) {
-                                    final JSONArray author = items.getJSONArray(i);
-                                    HelperFactory.getHelper().getAuthorDao().createOrUpdate(
-                                            new Author() {
-                                                {
-                                                    Id = author.getInt( key2idx.get("id") );
-                                                    Name = author.getString( key2idx.get("name") );
-                                                    Surname = author.getString( key2idx.get("surname") );
-                                                }
-                                            }
-                                    );
+                    public void replicate(JSONArray items, final HashMap<String, Integer> key2idx) throws Exception {
+                        for (int i = 0; i < items.length(); i++) {
+                            final JSONArray author = items.getJSONArray(i);
+                            HelperFactory.getHelper().getAuthorDao().createOrUpdate(
+                                new Author() {
+                                    {
+                                        Id = author.getInt( key2idx.get("id") );
+                                        Name = author.getString( key2idx.get("name") );
+                                        Surname = author.getString( key2idx.get("surname") );
+                                    }
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            );
                         }
                     }
                 });
-                mAq.ajax("http://api.fantasy-worlds.org/media", JSONObject.class, new AjaxCallback<JSONObject>() {
+                mAq.ajax("http://api.fantasy-worlds.org/media", JSONObject.class, new ReplicationCallback() {
                     @Override
-                    public void callback(String url, JSONObject obj, AjaxStatus status) {
-                        if (obj == null) {
-                            Log.e("Replication", url + " " + status.getMessage());
-                        } else {
-                            try {
-                                final JSONArray items = obj.getJSONArray("items");
-                                JSONArray schema = obj.getJSONArray("schema");
-                                Log.d("Replication", schema.toString());
-                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
-                                for (int i = 0; i < items.length(); i++) {
-                                    final JSONArray media = items.getJSONArray(i);
-                                    HelperFactory.getHelper().getMediaDAO().createOrUpdate(
-                                            new Media() {
-                                                {
-                                                    Id = media.getInt( key2idx.get("id") );
-                                                    BookId = media.getInt( key2idx.get("book_id") );
-                                                    MediaTitle = media.getString( key2idx.get("media_title") );
-                                                    BookTitle = media.getString( key2idx.get("book_title") );
-                                                    AuthorId = media.getInt( key2idx.get("author_id") );
-                                                    Description = media.getString( key2idx.get("description") );
-                                                    Cover = media.getString( key2idx.get("cover") );
-                                                }
-                                            }
-                                    );
+                    public void replicate(JSONArray items, final HashMap<String, Integer> key2idx) throws Exception {
+                        for (int i = 0; i < items.length(); i++) {
+                            final JSONArray media = items.getJSONArray(i);
+                            HelperFactory.getHelper().getMediaDAO().createOrUpdate(
+                                new Media() {
+                                    {
+                                        Id = media.getInt( key2idx.get("id") );
+                                        BookId = media.getInt( key2idx.get("book_id") );
+                                        MediaTitle = media.getString( key2idx.get("media_title") );
+                                        BookTitle = media.getString( key2idx.get("book_title") );
+                                        AuthorId = media.getInt( key2idx.get("author_id") );
+                                        Description = media.getString( key2idx.get("description") );
+                                        Cover = media.getString( key2idx.get("cover") );
+                                    }
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            );
                         }
                     }
                 });
-                mAq.ajax("http://api.fantasy-worlds.org/media_part", JSONObject.class, new AjaxCallback<JSONObject>() {
+                mAq.ajax("http://api.fantasy-worlds.org/media_part", JSONObject.class, new ReplicationCallback() {
                     @Override
-                    public void callback(String url, JSONObject obj, AjaxStatus status) {
-                        if (obj == null) {
-                            Log.e("Replication", url + " " + status.getMessage());
-                        } else {
-                            try {
-                                final JSONArray items = obj.getJSONArray("items");
-                                JSONArray schema = obj.getJSONArray("schema");
-                                Log.d("Replication", schema.toString());
-                                final HashMap<String, Integer> key2idx = getKey2Idx(schema);
-                                for (int i = 0; i < items.length(); i++) {
-                                    final JSONArray media_part = items.getJSONArray(i);
-                                    HelperFactory.getHelper().getMediaPartDAO().createOrUpdate(
-                                            new MediaPart() {
-                                                {
-                                                    Id = media_part.getInt( key2idx.get("id") );
-                                                    MediaId = media_part.getInt( key2idx.get("media_id") );
-                                                    Sequence = media_part.getInt( key2idx.get("sequence") );
-                                                    Title = media_part.getString( key2idx.get("title") );
-                                                    Path = media_part.getString( key2idx.get("path") );
-                                                }
-                                            }
-                                    );
+                    public void replicate(JSONArray items, final HashMap<String, Integer> key2idx) throws Exception {
+                        for (int i = 0; i < items.length(); i++) {
+                            final JSONArray media_part = items.getJSONArray(i);
+                            HelperFactory.getHelper().getMediaPartDAO().createOrUpdate(
+                                new MediaPart() {
+                                    {
+                                        Id = media_part.getInt( key2idx.get("id") );
+                                        MediaId = media_part.getInt( key2idx.get("media_id") );
+                                        Sequence = media_part.getInt( key2idx.get("sequence") );
+                                        Title = media_part.getString( key2idx.get("title") );
+                                        Path = media_part.getString( key2idx.get("path") );
+                                    }
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            );
                         }
                     }
                 });
