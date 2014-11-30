@@ -1,14 +1,9 @@
 package org.fantasy_worlds.audiobooks;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.graphics.PorterDuff;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -92,7 +87,7 @@ public class Main extends Activity {
         setTitle("Аудиокниги Fantasy-Worlds");
 
         Replication replication = new Replication(this);
-        Runnable r = replication.Init();
+        Runnable r = replication.Init(getApplicationContext());
         new Thread(r).start();
 
         ListView booksView = (ListView) findViewById(R.id.booksView);
@@ -105,7 +100,7 @@ public class Main extends Activity {
         try {
             medias = HelperFactory.getHelper().getMediaDAO().getAllMedia();
         }catch (SQLException e){
-
+            e.printStackTrace();
         }
 
         MediaAdapter adapter = new MediaAdapter(this, R.layout.booklist_item, medias);

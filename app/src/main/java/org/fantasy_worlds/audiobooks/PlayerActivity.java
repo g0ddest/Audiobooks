@@ -28,6 +28,7 @@ import com.androidquery.callback.AjaxStatus;
 
 import org.fantasy_worlds.audiobooks.dbo.Media;
 import org.fantasy_worlds.audiobooks.dbo.MediaPart;
+import org.fantasy_worlds.audiobooks.dbo.SavedPosition;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,24 +41,26 @@ import java.util.concurrent.TimeUnit;
 
 public class PlayerActivity extends Activity {
 
-    private MediaPlayer mediaPlayer = new MediaPlayer();
-    private HashMap<Integer, File> cachedMedias = new HashMap<Integer, File>();
-    private ImageButton buttonPlay;
-    private Integer nowPlaying;
-    private Integer playingDuration;
-    private SeekBar seekBar;
-    private TextView durationLabel;
+    private MediaPlayer mMediaPlayer = new MediaPlayer();
+    private HashMap<Integer, File> mCachedMedias = new HashMap<Integer, File>();
+    private ImageButton mButtonPlay;
+    private Integer mNowPlaying;
+    private Integer mPlayingDuration;
+    private SeekBar mSeekBar;
+    private TextView mDurationLabel;
     private Handler mHandler = new Handler();
+    private Integer mCount = 0;
     private StoppableRunnable updatePosition = new StoppableRunnable() {
+
         @Override
         public void stoppableRun() {
-            if(mediaPlayer != null && playingDuration != null){
-                int mCurrentPosition = mediaPlayer.getCurrentPosition();
-                seekBar.setProgress(mCurrentPosition);
+            if(mMediaPlayer != null && mPlayingDuration != null){
+                int mCurrentPosition = mMediaPlayer.getCurrentPosition();
+                mSeekBar.setProgress(mCurrentPosition);
                 String total = String.format("%02d:%02d",
-                        TimeUnit.MILLISECONDS.toMinutes(playingDuration),
-                        TimeUnit.MILLISECONDS.toSeconds(playingDuration) -
-                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(playingDuration))
+                        TimeUnit.MILLISECONDS.toMinutes(mPlayingDuration),
+                        TimeUnit.MILLISECONDS.toSeconds(mPlayingDuration) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(mPlayingDuration))
                 );
 
                 String now = String.format("%02d:%02d",
@@ -65,7 +68,22 @@ public class PlayerActivity extends Activity {
                         TimeUnit.MILLISECONDS.toSeconds(mCurrentPosition) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(mCurrentPosition))
                 );
-                durationLabel.setText(String.format("%s из %s", now, total));
+                mDurationLabel.setText(String.format("%s из %s", now, total));
+
+                Short savePositionTime = 5;
+                if(mCount >= savePositionTime){
+                    // Если проигрывается медиа, то каждые 5 секунд обновляем последнюю позицию
+                    mCount = 0;
+                    try {
+                        HelperFactory.getHelper().getSavedPositionDAO().savePosition(mNowPlaying, mCurrentPosition);
+                    }catch (SQLException e){
+                        e.printStackTrace();
+                    }
+
+                }else{
+                    mCount = mCount +1;
+                }
+
             }
             mHandler.postDelayed(this, 1000);
         }
@@ -109,7 +127,7 @@ public class PlayerActivity extends Activity {
             long expire = 0;
             aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, expire, new AjaxCallback<File>(){
                 public void callback(String url, File file, AjaxStatus status) {
-                    cachedMedias.put(mediaPart.Id, file);
+                    mCachedMedias.put(mediaPart.Id, file);
                     loadStatus.setImageDrawable(getResources().getDrawable(R.drawable.ic_ok));
                     mediaLoadBar.setVisibility(View.GONE);
                     if(file != null) {
@@ -136,6 +154,58 @@ public class PlayerActivity extends Activity {
         }
     }
 
+    private void startPlayPart(MediaPart item,  Integer position){
+        mNowPlaying = item.Id;
+        File audio = mCachedMedias.get(item.Id);
+        setMediaPlayerFile(mMediaPlayer, audio);
+        mSeekBar.setMax(mMediaPlayer.getDuration());
+        mPlayingDuration = mMediaPlayer.getDuration();
+        if(mMediaPlayer != null && position != null)
+            mMediaPlayer.seekTo(position);
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (mMediaPlayer != null && fromUser) {
+                    mMediaPlayer.seekTo(progress);
+                }
+            }
+        });
+        updatePosition.run();
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                MediaPart nextPart = null;
+                try {
+                    HelperFactory.getHelper().getSavedPositionDAO().completeListen(mNowPlaying);
+                    nextPart = HelperFactory.getHelper().getMediaPartDAO().getNextPart(mNowPlaying);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                if (nextPart != null) {
+                    mNowPlaying = nextPart.Id;
+                    File audio = mCachedMedias.get(mNowPlaying);
+                    setMediaPlayerFile(mp, audio);
+                    mSeekBar.setMax(mp.getDuration());
+                    mPlayingDuration = mp.getDuration();
+                } else {
+                    mNowPlaying = null;
+                }
+                mButtonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+            }
+        });
+        mButtonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
@@ -154,65 +224,34 @@ public class PlayerActivity extends Activity {
 
         setTitle(media.MediaTitle);
 
-        buttonPlay = (ImageButton) findViewById(R.id.btnPlay);
+        mButtonPlay = (ImageButton) findViewById(R.id.btnPlay);
 
         MediaPartAdapter adapter = new MediaPartAdapter(this, R.layout.medialist_item, mediaParts);
         ListView partsView = (ListView) findViewById(R.id.partsList);
-        seekBar = (SeekBar) findViewById(R.id.progressBar);
-        durationLabel = (TextView) findViewById(R.id.totalDurationLabel);
+        mSeekBar = (SeekBar) findViewById(R.id.progressBar);
+        mDurationLabel = (TextView) findViewById(R.id.totalDurationLabel);
         partsView.setAdapter(adapter);
         partsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 MediaPart item = (MediaPart) adapterView.getItemAtPosition(i);
-                nowPlaying = item.Id;
-                File audio = cachedMedias.get(item.Id);
-                setMediaPlayerFile(mediaPlayer, audio);
-                seekBar.setMax(mediaPlayer.getDuration());
-                playingDuration = mediaPlayer.getDuration();
-                seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                    @Override
-                    public void onStopTrackingTouch(SeekBar seekBar) {
-
-                    }
-                    @Override
-                    public void onStartTrackingTouch(SeekBar seekBar) {
-
-                    }
-                    @Override
-                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                        if(mediaPlayer != null && fromUser){
-                            mediaPlayer.seekTo(progress);
-                        }
-                    }
-                });
-                updatePosition.run();
-                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
-                {
-                    @Override
-                    public void onCompletion(MediaPlayer mp)
-                    {
-                        MediaPart nextPart = null;
-                        try {
-                            nextPart = HelperFactory.getHelper().getMediaPartDAO().getNextPart(nowPlaying);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                        if (nextPart != null) {
-                            nowPlaying = nextPart.Id;
-                            File audio = cachedMedias.get(nowPlaying);
-                            setMediaPlayerFile(mp, audio);
-                            seekBar.setMax(mp.getDuration());
-                            playingDuration = mp.getDuration();
-                        } else {
-                            nowPlaying = null;
-                        }
-                        buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
-                    }
-                });
-                buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
+                startPlayPart(item, null);
             }
         });
+
+        for (MediaPart item : mediaParts){
+
+            try {
+                SavedPosition pos = HelperFactory.getHelper().getSavedPositionDAO().getPositionByMediaPartId(item.Id);
+                if(pos != null){
+                    startPlayPart(item, pos.SavedPosition);
+                    break;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Override
@@ -232,18 +271,18 @@ public class PlayerActivity extends Activity {
     }
 
     public void onClickStart(View view) {
-        if(mediaPlayer.isPlaying()){
-            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
-            mediaPlayer.pause();
+        if(mMediaPlayer.isPlaying()){
+            mButtonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_play));
+            mMediaPlayer.pause();
         }else{
-            buttonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
-            mediaPlayer.start();
+            mButtonPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_player_pause));
+            mMediaPlayer.start();
         }
     }
 
     public void onDestroy() {
         updatePosition.stop();
-        mediaPlayer.stop();
+        mMediaPlayer.stop();
         super.onDestroy();
     }
 

@@ -15,6 +15,8 @@ import org.fantasy_worlds.audiobooks.dbo.Media;
 import org.fantasy_worlds.audiobooks.dbo.MediaDAO;
 import org.fantasy_worlds.audiobooks.dbo.MediaPart;
 import org.fantasy_worlds.audiobooks.dbo.MediaPartDAO;
+import org.fantasy_worlds.audiobooks.dbo.SavedPosition;
+import org.fantasy_worlds.audiobooks.dbo.SavedPositionDAO;
 
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String TAG = DatabaseHelper.class.getSimpleName();
@@ -29,6 +31,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private AuthorDAO authorDao = null;
     private MediaDAO mediaDAO = null;
     private MediaPartDAO mediaPartDAO = null;
+    private SavedPositionDAO savedPositionDAO = null;
 
     public DatabaseHelper(Context context) {
 
@@ -43,6 +46,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.createTable(connectionSource, Author.class);
             TableUtils.createTable(connectionSource, Media.class);
             TableUtils.createTable(connectionSource, MediaPart.class);
+            TableUtils.createTable(connectionSource, SavedPosition.class);
         }
         catch (SQLException e){
             Log.e(TAG, "error creating DB " + DATABASE_NAME);
@@ -54,6 +58,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVer,
                           int newVer){
+
+        try {
+            TableUtils.createTable(connectionSource, SavedPosition.class);
+        }catch (SQLException e){
+
+        }
+
         try{
             //Так делают ленивые, гораздо предпочтительнее не удаляя БД аккуратно вносить изменения
             TableUtils.dropTable(connectionSource, Author.class, true);
@@ -87,6 +98,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             mediaPartDAO = new MediaPartDAO(getConnectionSource(), MediaPart.class);
         }
         return mediaPartDAO;
+    }
+
+    public SavedPositionDAO getSavedPositionDAO() throws SQLException{
+        if(savedPositionDAO == null){
+            savedPositionDAO = new SavedPositionDAO(getConnectionSource(), SavedPosition.class);
+        }
+        return savedPositionDAO;
     }
 
     //выполняется при закрытии приложения

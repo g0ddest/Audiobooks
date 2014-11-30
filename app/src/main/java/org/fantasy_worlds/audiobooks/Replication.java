@@ -3,6 +3,7 @@ package org.fantasy_worlds.audiobooks;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -100,7 +101,7 @@ public class Replication {
         }
     }
 
-    public Runnable Init() {
+    public Runnable Init(final Context context) {
         return new Runnable() {
             public void run() {
                 mAq.ajax("http://api.fantasy-worlds.org/authors", JSONObject.class, new ReplicationCallback() {
@@ -160,6 +161,12 @@ public class Replication {
                         }
                     }
                 });
+
+                CharSequence text = "Синхронизация завершена";
+                int duration = Toast.LENGTH_SHORT;
+
+                /*Toast toast = Toast.makeText(context, text, duration);
+                toast.show();*/
             }
         };
     }

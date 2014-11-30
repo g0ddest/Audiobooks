@@ -3,6 +3,7 @@ package org.fantasy_worlds.audiobooks.dbo;
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 
 import java.sql.SQLException;
@@ -30,7 +31,7 @@ public class MediaPartDAO extends BaseDaoImpl<MediaPart, Integer> {
         QueryBuilder<MediaPart, Integer> queryBuilder = queryBuilder();
         queryBuilder.where().eq("MediaId", mediaPart.MediaId)
                 .and().gt("Sequence", mediaPart.Sequence);
-        queryBuilder.limit(new Long(1));
+        queryBuilder.limit(1L);
         queryBuilder.orderBy("Sequence", /*ascending*/ true);
         List<MediaPart> parts = queryBuilder.query();
         if (parts != null && parts.size() > 0) {
