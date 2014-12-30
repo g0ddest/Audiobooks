@@ -1,9 +1,11 @@
 .gradle
-/local.properties
-/.idea/*
-/.idea/libraries
+local.properties
+.idea
+.idea/libraries
 .DS_Store
-/build
+build
 
 .idea/misc.xml
 .idea/vcs.xml
+.idea/gradle.xml
+.idea/misc.xml
