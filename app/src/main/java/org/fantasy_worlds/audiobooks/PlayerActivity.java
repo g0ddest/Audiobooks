@@ -125,18 +125,27 @@ public class PlayerActivity extends Activity {
 
             assert mediaPart != null;
             long expire = 0;
-            aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, expire, new AjaxCallback<File>(){
-                public void callback(String url, File file, AjaxStatus status) {
-                    mCachedMedias.put(mediaPart.Id, file);
-                    loadStatus.setImageDrawable(getResources().getDrawable(R.drawable.ic_ok));
-                    mediaLoadBar.setVisibility(View.GONE);
-                    if(file != null) {
-                        Log.d("PlayerActivity", "OK");
-                    } else {
-                        Log.e("PlayerActivity", "Failed" + status);
+            aq.progress(R.id.media_progressbar).ajax(mediaPart.Path, File.class, expire,
+                new AjaxCallback<File>(){
+                    public void callback(String url, File file, AjaxStatus status) {
+                        mCachedMedias.put(mediaPart.Id, file);
+                        loadStatus.setImageDrawable(getResources().getDrawable(R.drawable.ic_ok));
+                        mediaLoadBar.setVisibility(View.GONE);
+                        if(file != null) {
+                            if(mOnReadyPosition != null && mOnReadyItem != null){
+                                MediaPart it = mOnReadyItem;
+                                Integer pos = mOnReadyPosition;
+                                mOnReadyItem = null;
+                                mOnReadyPosition = null;
+                                startPlayPart(it, pos);
+                            }
+                            Log.d("PlayerActivity", "OK");
+                        } else {
+                            Log.e("PlayerActivity", "Failed" + status);
+                        }
                     }
                 }
-            });
+            );
 
             return v;
         }
@@ -153,6 +162,15 @@ public class PlayerActivity extends Activity {
             e.printStackTrace();
         }
     }
+
+    private MediaPart mOnReadyItem;
+    private Integer mOnReadyPosition;
+
+    private void playOnReady(MediaPart item,  Integer position){
+        mOnReadyItem = item;
+        mOnReadyPosition = position;
+    }
+
 
     private void startPlayPart(MediaPart item,  Integer position){
         mNowPlaying = item.Id;
@@ -244,7 +262,7 @@ public class PlayerActivity extends Activity {
             try {
                 SavedPosition pos = HelperFactory.getHelper().getSavedPositionDAO().getPositionByMediaPartId(item.Id);
                 if(pos != null){
-                    startPlayPart(item, pos.SavedPosition);
+                    playOnReady(item, pos.SavedPosition);
                     break;
                 }
             } catch (SQLException e) {
