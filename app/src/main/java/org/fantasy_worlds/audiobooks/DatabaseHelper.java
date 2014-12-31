@@ -25,7 +25,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME ="audiobooks.db";
 
     //с каждым увеличением версии, при нахождении в устройстве БД с предыдущей версией будет выполнен метод onUpgrade();
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     //ссылки на DAO соответсвующие сущностям, хранимым в БД
     private AuthorDAO authorDao = null;
@@ -58,18 +58,12 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVer,
                           int newVer){
-
-        try {
-            TableUtils.createTable(connectionSource, SavedPosition.class);
-        }catch (SQLException e){
-
-        }
-
         try{
             //Так делают ленивые, гораздо предпочтительнее не удаляя БД аккуратно вносить изменения
             TableUtils.dropTable(connectionSource, Author.class, true);
             TableUtils.dropTable(connectionSource, Media.class, true);
             TableUtils.dropTable(connectionSource, MediaPart.class, true);
+            TableUtils.dropTable(connectionSource, SavedPosition.class, true);
             onCreate(db, connectionSource);
         }
         catch (SQLException e){

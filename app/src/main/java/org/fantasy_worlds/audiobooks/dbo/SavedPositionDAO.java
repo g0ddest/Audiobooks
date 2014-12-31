@@ -30,9 +30,11 @@ public class SavedPositionDAO extends BaseDaoImpl<SavedPosition, Integer> {
         return null;
     }
 
-    public void savePosition(final Integer mediaPartId, final Integer savedPosition) throws SQLException{
+    public void savePosition(final Integer mediaId, final Integer mediaPartId, final Integer savedPosition) throws SQLException{
+
         createOrUpdate(new SavedPosition(){
             {
+                MediaId = mediaId;
                 MediaPartId = mediaPartId;
                 SavedPosition = savedPosition;
             }

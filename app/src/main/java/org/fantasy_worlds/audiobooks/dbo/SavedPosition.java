@@ -5,8 +5,11 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "saved_position")
 public class SavedPosition {
+    @DatabaseField(id = true, uniqueIndex = true)
+    public Integer MediaId;
+
     // TODO: change to foreign key
-    @DatabaseField(id = true)
+    @DatabaseField()
     public Integer MediaPartId;
 
     @DatabaseField()
